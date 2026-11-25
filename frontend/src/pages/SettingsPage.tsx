@@ -6,9 +6,9 @@ import {
   persistPredictionToFirestore,
   saveSystemConfigToFirestore,
 } from '../lib/firebase.ts';
-import type { ModelEvaluationMetrics } from '../ml/pipeline.ts';
-import type { SystemSettings } from '../server/store.ts';
-import type { UserRole } from '../server/auth.ts';
+import type { ModelEvaluationMetrics } from '../../../ml/src/pipeline.ts';
+import type { SystemSettings } from '../../../backend/src/store.ts';
+import type { UserRole } from '../../../backend/src/auth.ts';
 
 const SAMPLE_ZEEK_LOG = JSON.stringify(
   {

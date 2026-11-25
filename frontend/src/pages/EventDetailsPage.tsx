@@ -4,8 +4,8 @@ import { ArrowLeft } from 'lucide-react';
 import { netshieldApi } from '../services/api.ts';
 import { useAuth } from '../context/AuthContext.tsx';
 import { updateAlertStatusInFirestore } from '../lib/firebase.ts';
-import { FEATURE_LABELS, FeatureName } from '../ml/schema.ts';
-import type { StoredAlert, StoredNetworkEvent } from '../server/store.ts';
+import { FEATURE_LABELS, FeatureName } from '../../../ml/src/schema.ts';
+import type { StoredAlert, StoredNetworkEvent } from '../../../backend/src/store.ts';
 
 export function EventDetailsPage() {
   const { id } = useParams<{ id: string }>();

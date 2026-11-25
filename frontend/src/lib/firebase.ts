@@ -20,9 +20,9 @@ import {
   where,
   writeBatch,
 } from 'firebase/firestore';
-import firebaseConfig from '../../firebase-applet-config.json';
-import type { ModelEvaluationMetrics } from '../ml/pipeline.ts';
-import type { StoredAlert, StoredNetworkEvent, SystemSettings } from '../server/store.ts';
+import firebaseConfig from '../../../firebase-applet-config.json';
+import type { ModelEvaluationMetrics } from '../../../ml/src/pipeline.ts';
+import type { StoredAlert, StoredNetworkEvent, SystemSettings } from '../../../backend/src/store.ts';
 
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);

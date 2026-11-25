@@ -12,7 +12,7 @@ import { RefreshCw } from 'lucide-react';
 import { netshieldApi } from '../services/api.ts';
 import { useAuth } from '../context/AuthContext.tsx';
 import { persistModelRegistryToFirestore } from '../lib/firebase.ts';
-import type { ModelEvaluationMetrics } from '../ml/pipeline.ts';
+import type { ModelEvaluationMetrics } from '../../../ml/src/pipeline.ts';
 
 function pct(val: number): string {
   return `${(val * 100).toFixed(2)}%`;

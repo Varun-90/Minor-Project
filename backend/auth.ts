@@ -7,7 +7,7 @@
 
 import crypto from 'crypto';
 import type { Request, Response, NextFunction } from 'express';
-import firebaseConfig from '../../firebase-applet-config.json';
+import firebaseConfig from '../firebase-applet-config.json';
 
 export type UserRole = 'admin' | 'analyst' | 'viewer';
 

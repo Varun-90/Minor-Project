@@ -4,7 +4,7 @@ import { Search } from 'lucide-react';
 import { netshieldApi } from '../services/api.ts';
 import { useAuth } from '../context/AuthContext.tsx';
 import { updateAlertStatusInFirestore } from '../lib/firebase.ts';
-import type { StoredAlert } from '../server/store.ts';
+import type { StoredAlert } from '../../../backend/src/store.ts';
 
 function formatTime(iso: string): string {
   if (!iso) return '—';

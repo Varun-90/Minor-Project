@@ -4,9 +4,9 @@
  */
 
 import axios from 'axios';
-import type { ModelEvaluationMetrics } from '../ml/pipeline.ts';
-import type { StoredAlert, StoredNetworkEvent, SystemSettings } from '../server/store.ts';
-import type { AuthUser, UserRole } from '../server/auth.ts';
+import type { ModelEvaluationMetrics } from '../../../ml/src/pipeline.ts';
+import type { StoredAlert, StoredNetworkEvent, SystemSettings } from '../../../backend/src/store.ts';
+import type { AuthUser, UserRole } from '../../../backend/src/auth.ts';
 
 let inMemoryToken: string | null = null;
 let tokenProvider: (() => Promise<string | null>) | null = null;

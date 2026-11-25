@@ -13,7 +13,7 @@ import { Download, FileSpreadsheet, Play, Upload } from 'lucide-react';
 import { CsvImportResponse, DashboardSummary, netshieldApi } from '../services/api.ts';
 import { useAuth } from '../context/AuthContext.tsx';
 import { persistPredictionToFirestore } from '../lib/firebase.ts';
-import type { StoredAlert, StoredNetworkEvent } from '../server/store.ts';
+import type { StoredAlert, StoredNetworkEvent } from '../../../backend/src/store.ts';
 
 const FLOW_PRESETS: Record<string, Record<string, string | number>> = {
   normal_https: {

@@ -12,7 +12,7 @@ import {
   googleAuthProvider,
 } from '../lib/firebase.ts';
 import { netshieldApi, setAuthToken, setDynamicTokenProvider } from '../services/api.ts';
-import type { AuthUser } from '../server/auth.ts';
+import type { AuthUser } from '../../../backend/src/auth.ts';
 
 interface AuthContextValue {
   user: AuthUser | null;

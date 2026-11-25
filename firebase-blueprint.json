@@ -1,0 +1,213 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Registered NetShield AI user account and RBAC profile.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "username": { "type": "string", "minLength": 2, "maxLength": 64 },
+        "email": { "type": "string", "format": "email", "maxLength": 256 },
+        "role": { "type": "string", "enum": ["admin", "analyst", "viewer"], "maxLength": 16 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "username", "email", "role", "createdAt"]
+    },
+    "AdminGrant": {
+      "title": "AdminGrant",
+      "description": "Trusted administrator grant record used for server-enforced RBAC checks.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "email": { "type": "string", "format": "email", "maxLength": 256 },
+        "grantedBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "grantedBy", "createdAt"]
+    },
+    "NetworkEvent": {
+      "title": "NetworkEvent",
+      "description": "Analyzed CIC-IDS2017 network-flow event with Random Forest classification output.",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "eventTime": { "type": "string", "maxLength": 64 },
+        "srcIp": { "type": "string", "maxLength": 64 },
+        "dstIp": { "type": "string", "maxLength": 64 },
+        "srcPort": { "type": "number" },
+        "dstPort": { "type": "number" },
+        "protocol": { "type": "string", "enum": ["TCP", "UDP", "ICMP", "OTHER"], "maxLength": 16 },
+        "prediction": { "type": "string", "enum": ["Normal", "Attack"], "maxLength": 16 },
+        "attackType": { "type": "string", "maxLength": 64 },
+        "score": { "type": "number" },
+        "severity": { "type": "string", "enum": ["None", "Low", "Medium", "High", "Critical"], "maxLength": 16 },
+        "modelVersion": { "type": "string", "maxLength": 32 },
+        "flowDuration": { "type": "number" },
+        "totalFwdPackets": { "type": "number" },
+        "totalBwdPackets": { "type": "number" },
+        "totalBytes": { "type": "number" },
+        "flowBytesPerSec": { "type": "number" },
+        "flowPacketsPerSec": { "type": "number" },
+        "synFlagCount": { "type": "number" },
+        "ackFlagCount": { "type": "number" },
+        "sourceBatch": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "ownerId",
+        "eventTime",
+        "srcIp",
+        "dstIp",
+        "srcPort",
+        "dstPort",
+        "protocol",
+        "prediction",
+        "attackType",
+        "score",
+        "severity",
+        "modelVersion",
+        "flowDuration",
+        "totalFwdPackets",
+        "totalBwdPackets",
+        "totalBytes",
+        "flowBytesPerSec",
+        "flowPacketsPerSec",
+        "synFlagCount",
+        "ackFlagCount",
+        "sourceBatch",
+        "createdAt"
+      ]
+    },
+    "Alert": {
+      "title": "Alert",
+      "description": "Security alert generated when a network event violates the configured threat policy.",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "eventId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "srcIp": { "type": "string", "maxLength": 64 },
+        "dstIp": { "type": "string", "maxLength": 64 },
+        "attackType": { "type": "string", "maxLength": 64 },
+        "severity": { "type": "string", "enum": ["Low", "Medium", "High", "Critical"], "maxLength": 16 },
+        "status": { "type": "string", "enum": ["Open", "Investigating", "Resolved"], "maxLength": 20 },
+        "description": { "type": "string", "maxLength": 500 },
+        "resolvedAt": { "type": "string", "maxLength": 64 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "ownerId",
+        "eventId",
+        "srcIp",
+        "dstIp",
+        "attackType",
+        "severity",
+        "status",
+        "description",
+        "resolvedAt",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ModelRegistryEntry": {
+      "title": "ModelRegistryEntry",
+      "description": "Versioned Random Forest model evaluation metadata and confusion matrix metrics.",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "version": { "type": "string", "maxLength": 32 },
+        "algorithm": { "type": "string", "maxLength": 64 },
+        "accuracy": { "type": "number" },
+        "precisionScore": { "type": "number" },
+        "recallScore": { "type": "number" },
+        "f1Score": { "type": "number" },
+        "falsePositiveRate": { "type": "number" },
+        "tn": { "type": "number" },
+        "fp": { "type": "number" },
+        "fn": { "type": "number" },
+        "tp": { "type": "number" },
+        "trainSamples": { "type": "number" },
+        "testSamples": { "type": "number" },
+        "nEstimators": { "type": "number" },
+        "maxDepth": { "type": "number" },
+        "artifactPath": { "type": "string", "maxLength": 256 },
+        "isActive": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "ownerId",
+        "version",
+        "algorithm",
+        "accuracy",
+        "precisionScore",
+        "recallScore",
+        "f1Score",
+        "falsePositiveRate",
+        "tn",
+        "fp",
+        "fn",
+        "tp",
+        "trainSamples",
+        "testSamples",
+        "nEstimators",
+        "maxDepth",
+        "artifactPath",
+        "isActive",
+        "createdAt"
+      ]
+    },
+    "SystemConfig": {
+      "title": "SystemConfig",
+      "description": "Detection policy thresholds and dashboard polling preferences.",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "pollingIntervalSec": { "type": "number" },
+        "criticalThreshold": { "type": "number" },
+        "highThreshold": { "type": "number" },
+        "mediumThreshold": { "type": "number" },
+        "lowThreshold": { "type": "number" },
+        "detectionMode": { "type": "string", "enum": ["detection_only"], "maxLength": 32 },
+        "zeekIntegrationEnabled": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "ownerId",
+        "pollingIntervalSec",
+        "criticalThreshold",
+        "highThreshold",
+        "mediumThreshold",
+        "lowThreshold",
+        "detectionMode",
+        "zeekIntegrationEnabled",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User profiles and RBAC roles isolated by owner or admin."
+    },
+    "/admins/{userId}": {
+      "schema": { "$ref": "#/entities/AdminGrant" },
+      "description": "Trusted admin grant registry."
+    },
+    "/network_events/{eventId}": {
+      "schema": { "$ref": "#/entities/NetworkEvent" },
+      "description": "Classified network-flow events scoped to the owning analyst or admin."
+    },
+    "/alerts/{alertId}": {
+      "schema": { "$ref": "#/entities/Alert" },
+      "description": "Security alerts linked to suspicious network_events documents."
+    },
+    "/model_registry/{modelId}": {
+      "schema": { "$ref": "#/entities/ModelRegistryEntry" },
+      "description": "Versioned Random Forest model evaluation runs."
+    },
+    "/system_config/{configId}": {
+      "schema": { "$ref": "#/entities/SystemConfig" },
+      "description": "Alert severity thresholds and polling configuration per user."
+    }
+  }
+}

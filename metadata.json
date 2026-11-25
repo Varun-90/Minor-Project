@@ -1,0 +1,6 @@
+{
+  "name": "NetShield AI",
+  "description": "AI-Powered Network Threat Detection and Intrusion Monitoring System powered by Random Forest flow classification.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

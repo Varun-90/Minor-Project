@@ -1,0 +1,326 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Primitive Helpers ---
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isBootstrappedAdmin() {
+      return isVerified() && request.auth.token.email.lower() == 'varunsoniff2007@gmail.com';
+    }
+
+    function isAdmin() {
+      return isBootstrappedAdmin() || (
+        isVerified() && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // --- Entity Validation Blueprints ---
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'username', 'email', 'role', 'createdAt']) &&
+        data.keys().hasOnly(['uid', 'username', 'email', 'role', 'createdAt']) &&
+        isValidId(data.uid) &&
+        data.username is string && data.username.size() >= 2 && data.username.size() <= 64 &&
+        data.email is string && data.email.size() >= 3 && data.email.size() <= 256 &&
+        data.role is string && data.role.size() <= 16 && data.role in ['admin', 'analyst', 'viewer'] &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidAdminGrant(data) {
+      return data.keys().hasAll(['uid', 'email', 'grantedBy', 'createdAt']) &&
+        data.keys().hasOnly(['uid', 'email', 'grantedBy', 'createdAt']) &&
+        isValidId(data.uid) &&
+        data.email is string && data.email.size() >= 3 && data.email.size() <= 256 &&
+        data.grantedBy is string && data.grantedBy.size() >= 1 && data.grantedBy.size() <= 128 &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidNetworkEvent(data) {
+      return data.keys().hasAll([
+          'ownerId', 'eventTime', 'srcIp', 'dstIp', 'srcPort', 'dstPort',
+          'protocol', 'prediction', 'attackType', 'score', 'severity',
+          'modelVersion', 'flowDuration', 'totalFwdPackets', 'totalBwdPackets',
+          'totalBytes', 'flowBytesPerSec', 'flowPacketsPerSec', 'synFlagCount',
+          'ackFlagCount', 'sourceBatch', 'createdAt'
+        ]) &&
+        data.keys().hasOnly([
+          'ownerId', 'eventTime', 'srcIp', 'dstIp', 'srcPort', 'dstPort',
+          'protocol', 'prediction', 'attackType', 'score', 'severity',
+          'modelVersion', 'flowDuration', 'totalFwdPackets', 'totalBwdPackets',
+          'totalBytes', 'flowBytesPerSec', 'flowPacketsPerSec', 'synFlagCount',
+          'ackFlagCount', 'sourceBatch', 'createdAt'
+        ]) &&
+        isValidId(data.ownerId) &&
+        data.eventTime is string && data.eventTime.size() >= 1 && data.eventTime.size() <= 64 &&
+        data.srcIp is string && data.srcIp.size() >= 1 && data.srcIp.size() <= 64 &&
+        data.dstIp is string && data.dstIp.size() >= 1 && data.dstIp.size() <= 64 &&
+        data.srcPort is number && data.srcPort >= 0 && data.srcPort <= 65535 &&
+        data.dstPort is number && data.dstPort >= 0 && data.dstPort <= 65535 &&
+        data.protocol is string && data.protocol.size() <= 16 && data.protocol in ['TCP', 'UDP', 'ICMP', 'OTHER'] &&
+        data.prediction is string && data.prediction.size() <= 16 && data.prediction in ['Normal', 'Attack'] &&
+        data.attackType is string && data.attackType.size() >= 1 && data.attackType.size() <= 64 &&
+        data.score is number && data.score >= 0 && data.score <= 1 &&
+        data.severity is string && data.severity.size() <= 16 && data.severity in ['None', 'Low', 'Medium', 'High', 'Critical'] &&
+        data.modelVersion is string && data.modelVersion.size() >= 1 && data.modelVersion.size() <= 32 &&
+        data.flowDuration is number && data.flowDuration >= 0 &&
+        data.totalFwdPackets is number && data.totalFwdPackets >= 0 &&
+        data.totalBwdPackets is number && data.totalBwdPackets >= 0 &&
+        data.totalBytes is number && data.totalBytes >= 0 &&
+        data.flowBytesPerSec is number && data.flowBytesPerSec >= 0 &&
+        data.flowPacketsPerSec is number && data.flowPacketsPerSec >= 0 &&
+        data.synFlagCount is number && data.synFlagCount >= 0 &&
+        data.ackFlagCount is number && data.ackFlagCount >= 0 &&
+        data.sourceBatch is string && data.sourceBatch.size() >= 1 && data.sourceBatch.size() <= 128 &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidAlert(data) {
+      return data.keys().hasAll([
+          'ownerId', 'eventId', 'srcIp', 'dstIp', 'attackType', 'severity',
+          'status', 'description', 'resolvedAt', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'ownerId', 'eventId', 'srcIp', 'dstIp', 'attackType', 'severity',
+          'status', 'description', 'resolvedAt', 'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.ownerId) &&
+        isValidId(data.eventId) &&
+        data.srcIp is string && data.srcIp.size() >= 1 && data.srcIp.size() <= 64 &&
+        data.dstIp is string && data.dstIp.size() >= 1 && data.dstIp.size() <= 64 &&
+        data.attackType is string && data.attackType.size() >= 1 && data.attackType.size() <= 64 &&
+        data.severity is string && data.severity.size() <= 16 && data.severity in ['Low', 'Medium', 'High', 'Critical'] &&
+        data.status is string && data.status.size() <= 20 && data.status in ['Open', 'Investigating', 'Resolved'] &&
+        data.description is string && data.description.size() >= 1 && data.description.size() <= 500 &&
+        data.resolvedAt is string && data.resolvedAt.size() <= 64 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidModelRegistry(data) {
+      return data.keys().hasAll([
+          'ownerId', 'version', 'algorithm', 'accuracy', 'precisionScore',
+          'recallScore', 'f1Score', 'falsePositiveRate', 'tn', 'fp', 'fn', 'tp',
+          'trainSamples', 'testSamples', 'nEstimators', 'maxDepth',
+          'artifactPath', 'isActive', 'createdAt'
+        ]) &&
+        data.keys().hasOnly([
+          'ownerId', 'version', 'algorithm', 'accuracy', 'precisionScore',
+          'recallScore', 'f1Score', 'falsePositiveRate', 'tn', 'fp', 'fn', 'tp',
+          'trainSamples', 'testSamples', 'nEstimators', 'maxDepth',
+          'artifactPath', 'isActive', 'createdAt'
+        ]) &&
+        isValidId(data.ownerId) &&
+        data.version is string && data.version.size() >= 1 && data.version.size() <= 32 &&
+        data.algorithm is string && data.algorithm.size() >= 1 && data.algorithm.size() <= 64 &&
+        data.accuracy is number && data.accuracy >= 0 && data.accuracy <= 1 &&
+        data.precisionScore is number && data.precisionScore >= 0 && data.precisionScore <= 1 &&
+        data.recallScore is number && data.recallScore >= 0 && data.recallScore <= 1 &&
+        data.f1Score is number && data.f1Score >= 0 && data.f1Score <= 1 &&
+        data.falsePositiveRate is number && data.falsePositiveRate >= 0 && data.falsePositiveRate <= 1 &&
+        data.tn is number && data.tn >= 0 &&
+        data.fp is number && data.fp >= 0 &&
+        data.fn is number && data.fn >= 0 &&
+        data.tp is number && data.tp >= 0 &&
+        data.trainSamples is number && data.trainSamples >= 0 &&
+        data.testSamples is number && data.testSamples >= 0 &&
+        data.nEstimators is number && data.nEstimators >= 1 && data.nEstimators <= 500 &&
+        data.maxDepth is number && data.maxDepth >= 1 && data.maxDepth <= 50 &&
+        data.artifactPath is string && data.artifactPath.size() >= 1 && data.artifactPath.size() <= 256 &&
+        data.isActive is bool &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidSystemConfig(data) {
+      return data.keys().hasAll([
+          'ownerId', 'pollingIntervalSec', 'criticalThreshold', 'highThreshold',
+          'mediumThreshold', 'lowThreshold', 'detectionMode',
+          'zeekIntegrationEnabled', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'ownerId', 'pollingIntervalSec', 'criticalThreshold', 'highThreshold',
+          'mediumThreshold', 'lowThreshold', 'detectionMode',
+          'zeekIntegrationEnabled', 'updatedAt'
+        ]) &&
+        isValidId(data.ownerId) &&
+        data.pollingIntervalSec is number && data.pollingIntervalSec >= 0 && data.pollingIntervalSec <= 300 &&
+        data.criticalThreshold is number && data.criticalThreshold >= 0 && data.criticalThreshold <= 1 &&
+        data.highThreshold is number && data.highThreshold >= 0 && data.highThreshold <= 1 &&
+        data.mediumThreshold is number && data.mediumThreshold >= 0 && data.mediumThreshold <= 1 &&
+        data.lowThreshold is number && data.lowThreshold >= 0 && data.lowThreshold <= 1 &&
+        data.detectionMode is string && data.detectionMode.size() <= 32 && data.detectionMode in ['detection_only'] &&
+        data.zeekIntegrationEnabled is bool &&
+        data.updatedAt is timestamp;
+    }
+
+    // --- Collection Rules ---
+
+    // 1. Users (PII isolated to owner or verified admin)
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isBootstrappedAdmin();
+      allow create: if isVerified() &&
+        isValidId(userId) &&
+        isValidUser(incoming()) &&
+        incoming().uid == userId &&
+        incoming().createdAt == request.time &&
+        (
+          (isOwner(userId) && incoming().role == 'analyst') ||
+          (isOwner(userId) && isBootstrappedAdmin() && incoming().role == 'admin') ||
+          isAdmin()
+        );
+      allow update: if isVerified() &&
+        isValidId(userId) &&
+        isValidUser(incoming()) &&
+        incoming().uid == existing().uid &&
+        incoming().createdAt == existing().createdAt &&
+        (
+          isAdmin() ||
+          (isOwner(userId) && incoming().diff(existing()).affectedKeys().hasOnly(['username']))
+        );
+      allow delete: if isValidId(userId) && isAdmin();
+    }
+
+    // 2. Trusted Admin Grants
+    match /admins/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isBootstrappedAdmin();
+      allow create: if isVerified() &&
+        isValidId(userId) &&
+        isValidAdminGrant(incoming()) &&
+        incoming().uid == userId &&
+        incoming().createdAt == request.time &&
+        isAdmin();
+      allow update: if false;
+      allow delete: if isValidId(userId) && isAdmin();
+    }
+
+    // 3. Network Events
+    match /network_events/{eventId} {
+      allow get: if isValidId(eventId) && isSignedIn() && (existing().ownerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isVerified() &&
+        isValidId(eventId) &&
+        isValidNetworkEvent(incoming()) &&
+        incoming().ownerId == request.auth.uid &&
+        incoming().createdAt == request.time;
+      allow update: if isVerified() &&
+        isValidId(eventId) &&
+        isValidNetworkEvent(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        isAdmin();
+      allow delete: if isValidId(eventId) && isVerified() && (existing().ownerId == request.auth.uid || isAdmin());
+    }
+
+    // 4. Alerts (Linked to network_events + Terminal State Locking on Resolved)
+    match /alerts/{alertId} {
+      allow get: if isValidId(alertId) && isSignedIn() && (existing().ownerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isVerified() &&
+        isValidId(alertId) &&
+        isValidAlert(incoming()) &&
+        incoming().ownerId == request.auth.uid &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        (
+          exists(/databases/$(database)/documents/network_events/$(incoming().eventId)) ||
+          existsAfter(/databases/$(database)/documents/network_events/$(incoming().eventId))
+        );
+      allow update: if isVerified() &&
+        isValidId(alertId) &&
+        isValidAlert(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().eventId == existing().eventId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          isAdmin() ||
+          (
+            existing().ownerId == request.auth.uid &&
+            existing().status != 'Resolved' &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt', 'resolvedAt'])
+          )
+        );
+      allow delete: if isValidId(alertId) && isVerified() && (existing().ownerId == request.auth.uid || isAdmin());
+    }
+
+    // 5. Model Registry
+    match /model_registry/{modelId} {
+      allow get: if isValidId(modelId) && isSignedIn() && (existing().ownerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isVerified() &&
+        isValidId(modelId) &&
+        isValidModelRegistry(incoming()) &&
+        incoming().ownerId == request.auth.uid &&
+        incoming().createdAt == request.time;
+      allow update: if isVerified() &&
+        isValidId(modelId) &&
+        isValidModelRegistry(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        (
+          isAdmin() ||
+          (
+            existing().ownerId == request.auth.uid &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['isActive'])
+          )
+        );
+      allow delete: if isValidId(modelId) && isAdmin();
+    }
+
+    // 6. System Config
+    match /system_config/{configId} {
+      allow get: if isValidId(configId) && (isOwner(configId) || isAdmin());
+      allow list: if isBootstrappedAdmin();
+      allow create: if isVerified() &&
+        isValidId(configId) &&
+        isValidSystemConfig(incoming()) &&
+        incoming().ownerId == request.auth.uid &&
+        configId == request.auth.uid &&
+        incoming().updatedAt == request.time;
+      allow update: if isVerified() &&
+        isValidId(configId) &&
+        isValidSystemConfig(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().updatedAt == request.time &&
+        (
+          isAdmin() ||
+          (
+            isOwner(configId) &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'pollingIntervalSec', 'criticalThreshold', 'highThreshold',
+              'mediumThreshold', 'lowThreshold', 'zeekIntegrationEnabled', 'updatedAt'
+            ])
+          )
+        );
+      allow delete: if isValidId(configId) && isAdmin();
+    }
+  }
+}
